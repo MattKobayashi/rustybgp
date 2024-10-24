@@ -1417,16 +1417,16 @@ impl PolicyTable {
         &mut self,
         assignment: api::PolicyAssignment,
     ) -> Result<(api::PolicyDirection, Arc<PolicyAssignment>), Error> {
-        let dir = api::PolicyDirection::from_i32(assignment.direction)
-            .ok_or_else(|| Error::InvalidArgument("invalid assignment direction".to_string()))?;
+        let dir = api::PolicyDirection::try_from(assignment.direction)
+            .map_err(|_| Error::InvalidArgument("invalid assignment direction".to_string()))?;
         if dir == api::PolicyDirection::Unknown {
             return Err(Error::InvalidArgument(
                 "invalid assignment direction".to_string(),
             ));
         }
 
-        let action = api::RouteAction::from_i32(assignment.default_action)
-            .ok_or_else(|| Error::InvalidArgument("invalid action".to_string()))?;
+        let action = api::RouteAction::try_from(assignment.default_action)
+            .map_err(|_| Error::InvalidArgument("invalid action".to_string()))?;
 
         let mut v = Vec::new();
         for p in assignment.policies {
@@ -1525,8 +1525,8 @@ impl PolicyTable {
     }
 
     pub(crate) fn add_defined_set(&mut self, set: api::DefinedSet) -> Result<(), Error> {
-        let t = api::DefinedType::from_i32(set.defined_type)
-            .ok_or_else(|| Error::InvalidArgument("invalid defined-type".to_string()))?;
+        let t = api::DefinedType::try_from(set.defined_type)
+            .map_err(|_| Error::InvalidArgument("invalid defined-type".to_string()))?;
         let name: Arc<str> = Arc::from(set.name.as_str());
         let name1 = name.clone();
         match t {
@@ -1748,9 +1748,9 @@ impl PolicyTable {
                 v.push(Condition::Nexthop(nexthops));
             }
             if conditions.rpki_result != api::validation::State::None as i32 {
-                match api::validation::State::from_i32(conditions.rpki_result) {
-                    Some(s) => v.push(Condition::Rpki(s)),
-                    None => {
+                match api::validation::State::try_from(conditions.rpki_result) {
+                    Ok(s) => v.push(Condition::Rpki(s)),
+                    Err(_) => {
                         return Err(Error::InvalidArgument("invalid rpki condition".to_string()))
                     }
                 }
@@ -1758,13 +1758,13 @@ impl PolicyTable {
         }
         let mut disposition = None;
         if let Some(actions) = actions {
-            match api::RouteAction::from_i32(actions.route_action) {
-                Some(a) => match a {
+            match api::RouteAction::try_from(actions.route_action) {
+                Ok(a) => match a {
                     api::RouteAction::Accept => disposition = Some(Disposition::Accept),
                     api::RouteAction::Reject => disposition = Some(Disposition::Reject),
                     _ => {}
                 },
-                None => return Err(Error::InvalidArgument("invalid action".to_string())),
+                Err(_) => return Err(Error::InvalidArgument("invalid action".to_string())),
             }
         }
         let s = Statement {

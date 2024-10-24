@@ -1265,7 +1265,7 @@ impl GobgpApi for GrpcService {
             Some(family) => Family::from(&family),
             None => Family::IPV4,
         };
-        let (table_type, peer_addr) = if let Some(t) = api::TableType::from_i32(request.table_type)
+        let (table_type, peer_addr) = if let Ok(t) = api::TableType::try_from(request.table_type)
         {
             let s = match t {
                 api::TableType::Global => None,
@@ -3539,9 +3539,7 @@ impl Handler {
         let local_sockaddr = stream.local_addr()?;
         let rxbuf_size = 1 << 16;
         let mut txbuf_size = 1 << 16;
-        if let Ok(r) =
-            nix::sys::socket::getsockopt(stream.as_raw_fd(), nix::sys::socket::sockopt::SndBuf)
-        {
+        if let Ok(r) = nix::sys::socket::getsockopt(&stream, nix::sys::socket::sockopt::SndBuf) {
             txbuf_size = std::cmp::min(txbuf_size, r / 2);
         }
 
