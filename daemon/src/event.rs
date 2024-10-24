@@ -990,18 +990,15 @@ impl GobgpApi for GrpcService {
                         ));
                     } else {
                         p.admin_down = true;
-                        match &p.mgmt_tx {
-                            Some(mgmt_tx) => {
-                                let _ = mgmt_tx.send(PeerMgmtMsg::Notification(
-                                    bgp::Message::Notification {
-                                        code: 6,
-                                        subcode: 2,
-                                        data: Vec::new(),
-                                    },
-                                ));
-                                return Ok(tonic::Response::new(()));
-                            }
-                            None => {}
+                        if let Some(mgmt_tx) = &p.mgmt_tx {
+                            let _ = mgmt_tx.send(PeerMgmtMsg::Notification(
+                                bgp::Message::Notification {
+                                    code: 6,
+                                    subcode: 2,
+                                    data: Vec::new(),
+                                },
+                            ));
+                            return Ok(tonic::Response::new(()));
                         }
                         return Ok(tonic::Response::new(()));
                     }
