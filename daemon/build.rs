@@ -8,6 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
     let git_hash = String::from_utf8(output.stdout).unwrap();
     println!("cargo:rustc-env=GIT_HASH={git_hash}");
+    std::env::set_var("PROTOC", protobuf_src::protoc());
     tonic_build::configure().build_server(true).compile_protos(
         &[
             "../api/gobgp.proto",
