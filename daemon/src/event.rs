@@ -1262,8 +1262,7 @@ impl GobgpApi for GrpcService {
             Some(family) => Family::from(&family),
             None => Family::IPV4,
         };
-        let (table_type, peer_addr) = if let Ok(t) = api::TableType::try_from(request.table_type)
-        {
+        let (table_type, peer_addr) = if let Ok(t) = api::TableType::try_from(request.table_type) {
             let s = match t {
                 api::TableType::Global => None,
                 api::TableType::Local | api::TableType::Vrf => {
